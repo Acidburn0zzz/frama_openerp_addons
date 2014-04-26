@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <!-- MEMBERSHIP -->
+
+        <!-- MEMBERSHIP/CURRENT MEMBERS -->
+
+        <record id="override_view_res_partner_member_filter" model="ir.ui.view">
+            <field name="name">res.partner.select</field>
+            <field name="model">res.partner</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="membership.view_res_partner_member_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="/search//filter[@name='customer']" position="replace" />
+                <xpath expr="/search//filter[@name='supplier']" position="replace" />
+                <xpath expr="/search//filter[@string='Salesperson']" position="replace" />
+            </field>
+        </record>
+
+        <!-- Kanban view for members -->
+        <record id="members_kanban_view" model="ir.ui.view">
+            <field name="name">members.kanban.view</field>
+            <field name="model">res.partner</field>
+            <field name="type">kanban</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="name" />
+                    <field name="has_image" />
+                    <field name="membership_state" />
+                    <field name="email" />
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_vignette oe_semantic_html_override">
+                                <a type="open">
+                                    <t t-if="record.has_image.raw_value === true">
+                                        <img t-att-src="kanban_image('res.partner', 'image_small', record.id.value)" class="oe_kanban_image" />
+                                    </t>
+                                    <t t-if="record.has_image.raw_value === false">
+                                        <img t-att-src='_s + "/base/static/src/img/avatar.png"' class="oe_kanban_image" />
+                                    </t>
+                                </a>
+                                <div class="oe_kanban_details">
+                                    <h4 class="oe_partner_heading"><a type="open"><field name="name" /></a></h4>
+                                    <div class="oe_kanban_partner_categories"/>
+                                    <div class="oe_kanban_partner_links"/>
+                                    <ul>
+                                        <li t-if="record.membership_state.raw_value"><field name="membership_state" /></li>
+                                        <li t-if="record.email.raw_value"><a t-attf-href="mailto:#{record.email.raw_value}"><field name="email" /></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="membership.action_membership_members">
+            <field name="name">Members</field>
+            <field name="res_model">res.partner</field>
+            <field name="search_view_id" ref="membership.view_res_partner_member_filter"/>
+            <field name="context">{"default_member_ok": True}</field>
+            <field name="domain">[('member_ok', '=', True)]</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="membership.action_membership_members_view_kanban">
+            <field name="view_id" ref="members_kanban_view" />
+        </record>
+
+
+        <!-- PARTNERS -->
+
+        <record id="framasoft_membership_partner_form_view" model="ir.ui.view">
+            <field name="name">framasoft.membership.partner.form.view</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="membership.view_partner_form" />
+            <field name="arch" type="xml">
+                <!-- Add member_ok field on partner form view -->
+                <xpath expr="/form//field[@name='user_id']" position="after">
+                    <field name="member_ok" />
+                </xpath>
+
+                <!-- If the partner is not a member, don't display Membership tab -->
+                <xpath expr="/form//page[@string='Membership']" position="attributes">
+                    <attribute name="attrs">{'invisible': [('member_ok', '=', False)]}</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</openerp>
